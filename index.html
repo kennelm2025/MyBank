@@ -2,7 +2,9 @@
 <!--
   ════════════════════════════════════════════════════════════════════════════
   MyBank · Vendor Evaluation Simulator
-  build  : v1d84a (file: index_v1d84a.html)
+  build  : v1d84b (file: index_v1d84b.html)
+  step   : v1d84b — RISK HEATMAP REBASE: colour ramp score/3; ZONE green>2.0 / amber 1.0–2.0 / red ≤1.0;
+           legend 3.0→0.0; card labels + caption + red-zone text to 0–3 basis; GAP_THRESHOLD 2.0→1.0. (Ratified.)
   step   : v1d84a — BOOT FIX: relocate SME/VENDOR scale consts above the legacy POV-alias loop
            (line ~7683 referenced SME_SCORE_MAX before its const init → TDZ ReferenceError that halted engine boot).
   step   : v1d84 — SCALE 1–4 → 0–3: SME/VENDOR_SCORE_MIN/MAX → 0/3; Method-D & % divisors → / SME_SCORE_MAX;
@@ -207,7 +209,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyBank · Vendor Evaluation Simulator · v1d84a</title>
+<title>MyBank · Vendor Evaluation Simulator · v1d84b</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -3537,8 +3539,8 @@
 <div class="masthead">
   <div class="masthead-left">
     <h1>MyBank · Vendor Evaluation Simulator</h1>
-    <span class="ver">v1d84a · Dec 2027 calibration target</span>
-    <span class="ver build-stamp">build D.84 · scoring scale converted 1–4 → 0–3 (Not Met 0 · Partially 1 · Substantially 2 · Fully 3). Engine divisors, band cuts, score→label maps, embedded seed and the three interim vendor masters all shifted; a genuine 0 now reads as Not Met and zeroes that requirement’s Validated Capability (clean-zero, no floor). Evidence store reset to v2 — re-import the 0–3 vendor masters when they land. [v1d84a: relocated scale consts above the POV-alias loop to clear a boot-time TDZ ReferenceError.] · 2026-06-19</span>
+    <span class="ver">v1d84b · Dec 2027 calibration target</span>
+    <span class="ver build-stamp">build D.84 · scoring scale converted 1–4 → 0–3 (Not Met 0 · Partially 1 · Substantially 2 · Fully 3). Engine divisors, band cuts, score→label maps, embedded seed and the three interim vendor masters all shifted; a genuine 0 now reads as Not Met and zeroes that requirement’s Validated Capability (clean-zero, no floor). Evidence store reset to v2 — re-import the 0–3 vendor masters when they land. [v1d84a: relocated scale consts above the POV-alias loop to clear a boot-time TDZ ReferenceError.] [v1d84b: Risk Heatmap colour/zone thresholds rebased to the 0–3 scale — green >2.0, amber 1.0–2.0, red ≤1.0; gap ≤1.0.] · 2026-06-19</span>
   </div>
   <div style="display:flex;align-items:center;gap:14px;">
     <span class="stale-flag hidden" id="staleFlag" style="cursor:pointer;" title="Click to run Simulate L1 from any page">⚠ Stale — click to Simulate L1</span>
@@ -3756,7 +3758,7 @@
     <span class="meta">Average score · zone counts · zone distribution</span>
   </div>
   <p class="heatmap-intro">
-    Average domain score across all 26 domains, plus the count of domains falling into green (&gt;6.5), amber (4.5–6.5), and red (≤4.5) zones on the 2–8 scale. The stacked bar shows zone distribution at a glance.
+    Average domain score across all 26 domains, plus the count of domains falling into green (&gt;2.0), amber (1.0–2.0), and red (≤1.0) zones on the 0–3 scale. The stacked bar shows zone distribution at a glance.
   </p>
   <div class="risk-posture-grid" id="riskPostureGrid">
     <!-- populated by JS -->
@@ -3780,7 +3782,7 @@
       <button class="btn" id="simBtnGaps">Simulate L1</button>
     </div>
     <div class="action-bar-right">
-      Domains with score ≤ 4.5 · proxy until mandatory-domain list is defined
+      Domains with score ≤ 1.0 · proxy until mandatory-domain list is defined
     </div>
   </div>
 
@@ -9521,12 +9523,12 @@ function renderDrillDown() {
 // ============================================================================
 // RENDERING — Risk Heatmap page
 // ============================================================================
-// Map score (2-8) to red→amber→green hex.
-// Stops: 2→deep red, 4.5→amber, 6.5→yellow-green, 8→deep green
+// Map score (0-3) to red→amber→green hex.
+// Stops: 0→deep red, 1.5→amber, 2.25→yellow-green, 3→deep green
 function scoreColour(score) {
-  // Method D: Validated Capability is on 0.25-4 scale.
-  // Normalize to 0..1 across 1..4 (most points fall in this band; <1 → red).
-  const t = Math.max(0, Math.min(1, (score - 1) / 3));
+  // Method D: Validated Capability is on 0-3 scale.
+  // Normalize to 0..1 across 0..3 (0 → red, 3 → green).
+  const t = Math.max(0, Math.min(1, score / 3));
   const stops = [
     [0.00, [208, 69, 69]],
     [0.30, [212, 149, 85]],
@@ -9548,10 +9550,10 @@ function scoreColour(score) {
   return 'rgb(82,168,90)';
 }
 
-// Zone thresholds for Method D Validated Capability (1-4 scale)
+// Zone thresholds for Method D Validated Capability (0-3 scale)
 const ZONE = {
-  GREEN_MIN: 3.0,    // >3.0 = green   (strong, validated)
-  AMBER_MIN: 2.0     // 2.0-3.0 = amber, <=2.0 = red
+  GREEN_MIN: 2.0,    // >2.0 = green   (strong, validated)
+  AMBER_MIN: 1.0     // 1.0-2.0 = amber, <=1.0 = red
 };
 function zoneOf(score) {
   if (score > ZONE.GREEN_MIN) return 'green';
@@ -9602,15 +9604,15 @@ function renderRiskPosture() {
         <div class="risk-card-zones">
           <div>
             <div class="risk-card-zone-count" style="color: ${ZONE_COLOUR.green}">${counts.green}</div>
-            <div class="risk-card-zone-label">Green (&gt;6.5)</div>
+            <div class="risk-card-zone-label">Green (&gt;2.0)</div>
           </div>
           <div>
             <div class="risk-card-zone-count" style="color: ${ZONE_COLOUR.amber}">${counts.amber}</div>
-            <div class="risk-card-zone-label">Amber (4.5–6.5)</div>
+            <div class="risk-card-zone-label">Amber (1.0–2.0)</div>
           </div>
           <div>
             <div class="risk-card-zone-count" style="color: ${ZONE_COLOUR.red}">${counts.red}</div>
-            <div class="risk-card-zone-label">Red (≤4.5)</div>
+            <div class="risk-card-zone-label">Red (≤1.0)</div>
           </div>
         </div>
         <div class="risk-card-bar">
@@ -9626,9 +9628,9 @@ function renderRiskPosture() {
 function renderScaleLegend() {
   const legend = document.getElementById('scaleLegend');
   if (!legend) return;
-  // 13 chips from 8.0 down to 2.0 in 0.5 steps
+  // 7 chips from 3.0 down to 0.0 in 0.5 steps (0-3 scale)
   const stops = [];
-  for (let s = 8.0; s >= 2.0; s -= 0.5) stops.push(s);
+  for (let s = 3.0; s >= 0; s -= 0.5) stops.push(s);
   legend.innerHTML = `
     <span class="scale-legend-label">Score scale</span>
     ${stops.map(s => `<span class="scale-chip" style="background: ${scoreColour(s)}">${s.toFixed(1)}</span>`).join('')}
@@ -9683,9 +9685,9 @@ function renderHeatmap() {
 
 // ============================================================================
 // RENDERING — Mandatory Gaps page (threshold proxy: Validated Capability ≤ 2.0)
-// Method D: rescaled from the legacy 4.5 / 2-8 threshold to 2.0 / 1-4 scale.
+// Method D: rescaled to 1.0 on the 0-3 scale (flags Partially / Not-Met).
 // ============================================================================
-const GAP_THRESHOLD = 2.0;
+const GAP_THRESHOLD = 1.0;
 
 function renderMandatoryGaps() {
   const cardGrid = document.getElementById('gapsGrid');
@@ -13470,7 +13472,7 @@ function buildBaselineBundle() {
   const r = STATE.l2Reading;
   return {
     schema: 'mybank-baseline-bundle/1',
-    build: 'v1d84a',
+    build: 'v1d84b',
     baselineId: id,
     provenance,
     createdAt: new Date().toISOString(),
