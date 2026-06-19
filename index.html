@@ -2,7 +2,11 @@
 <!--
   ════════════════════════════════════════════════════════════════════════════
   MyBank · Vendor Evaluation Simulator
-  build  : v1d82 (file: index_v1d82.html)
+  build  : v1d83 (file: index_v1d83.html)
+  step   : v1d83 — PASSWORD GATE: full-screen login overlay on load; entered password is
+           SHA-256(salt+pw)-hashed and compared to an embedded hash (password never in
+           source). Unlocks for the browser session (sessionStorage). DETERRENT ONLY —
+           page content/data remain in source; this hides the password, not the data.
   step   : v1d82 — SELF-CONTAINED DEPLOY: embedded the three 17-06 vendor masters as
            base64 and auto-load them via importVendorWorkbook() at boot when no stored
            evidence exists (e.g. fresh GitHub Pages origin). Fixes empty Build vs Buy /
@@ -198,7 +202,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MyBank · Vendor Evaluation Simulator · v1d82</title>
+<title>MyBank · Vendor Evaluation Simulator · v1d83</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter+Tight:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -3488,11 +3492,47 @@
 </head>
 <body>
 
+<!-- (v1d83) password gate — SHA-256(salt+pw) vs embedded hash. Deterrent only:
+     page content remains in source; this hides the password, not the data. -->
+<div id="loginGate" style="position:fixed;inset:0;z-index:99999;background:#0e1116;display:flex;align-items:center;justify-content:center;font-family:Georgia,'Times New Roman',serif;">
+  <div style="width:340px;max-width:90vw;padding:34px 30px;border:1px solid rgba(255,255,255,.12);border-radius:14px;background:rgba(255,255,255,.03);text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.5);">
+    <div style="font-size:19px;font-weight:700;color:#e8e8e8;letter-spacing:.03em;margin-bottom:6px;">MyBank · Vendor Evaluation</div>
+    <div style="font-size:12px;color:#8a93a0;margin-bottom:22px;font-family:Arial,sans-serif;">Enter password to continue</div>
+    <input id="loginPw" type="password" autocomplete="current-password" placeholder="Password" style="width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid rgba(255,255,255,.18);border-radius:8px;background:#161b22;color:#e8e8e8;font-size:14px;outline:none;margin-bottom:12px;font-family:Arial,sans-serif;" />
+    <button id="loginBtn" style="width:100%;padding:11px;border:none;border-radius:8px;background:#d9b441;color:#1a1a1a;font-weight:700;font-size:14px;cursor:pointer;letter-spacing:.03em;font-family:Arial,sans-serif;">Unlock</button>
+    <div id="loginErr" style="display:none;color:#e07a7a;font-size:12px;margin-top:13px;font-family:Arial,sans-serif;">Incorrect password</div>
+  </div>
+</div>
+<script>
+(function(){
+  var S='mybank-v1-', H='984e154fe6f7f14ad3283258e8a5389f058b621b90c051306c6adee1ce6cc718', K='mybank_gate_v1';
+  function hex(b){return Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2);}).join('');}
+  function sha(s){return crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)).then(hex);}
+  function drop(){ try{sessionStorage.setItem(K,'1');}catch(e){} var g=document.getElementById('loginGate'); if(g&&g.parentNode) g.parentNode.removeChild(g); }
+  function init(){
+    var ok=false; try{ok=sessionStorage.getItem(K)==='1';}catch(e){}
+    if(ok){ drop(); return; }
+    var inp=document.getElementById('loginPw'), btn=document.getElementById('loginBtn'), err=document.getElementById('loginErr');
+    if(!inp||!btn) return;
+    function attempt(){
+      sha(S+(inp.value||'')).then(function(h){
+        if(h===H){ drop(); }
+        else { if(err) err.style.display='block'; inp.value=''; inp.focus(); }
+      }).catch(function(){ if(err){ err.textContent='Crypto unavailable here (needs https or file://).'; err.style.display='block'; } });
+    }
+    btn.onclick=attempt;
+    inp.addEventListener('keydown', function(e){ if(e.key==='Enter') attempt(); });
+    setTimeout(function(){ try{inp.focus();}catch(e){} }, 60);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>
+
 <!-- Masthead -->
 <div class="masthead">
   <div class="masthead-left">
     <h1>MyBank · Vendor Evaluation Simulator</h1>
-    <span class="ver">v1d82 · Dec 2027 calibration target</span>
+    <span class="ver">v1d83 · Dec 2027 calibration target</span>
     <span class="ver build-stamp">build D.71 · embedded seed reset to the 17-06-2026 SME master rollup — POV baseline (26 domains × 3 vendors) now carries the latest validated scores. NOTE: imported evidence overrides the seed on load, so Clear evidence to view the reseeded baseline, or re-import the updated vendor masters to refresh the card with row-level 17-06 data. · 2026-06-17</span>
   </div>
   <div style="display:flex;align-items:center;gap:14px;">
@@ -13420,7 +13460,7 @@ function buildBaselineBundle() {
   const r = STATE.l2Reading;
   return {
     schema: 'mybank-baseline-bundle/1',
-    build: 'v1d82',
+    build: 'v1d83',
     baselineId: id,
     provenance,
     createdAt: new Date().toISOString(),
